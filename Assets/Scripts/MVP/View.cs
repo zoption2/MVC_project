@@ -1,28 +1,18 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using System;
+﻿using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
-namespace PatternMVC
+
+namespace PatternMVP
 {
-    public interface IView
-    {
-        void SetName(string name);
-        void SetMaxHealth(int value);
-        void SetCurrentHealth(int value);
-        void SetPoints(int value);
-        void ActivateSkillButtons()
-    }
-
-    public class View: MonoBehaviour, IView
+    public class View: MonoBehaviour
     {
         private const string kHealthFormat = "{0}/{1}";
 
-        [SerializeField] private Text _name;
-        [SerializeField] private Text _health;
-        [SerializeField] private Text _power;
-        [SerializeField] private Text _points;
+        [SerializeField] private TMP_Text _name;
+        [SerializeField] private TMP_Text _health;
+        [SerializeField] private TMP_Text _power;
+        [SerializeField] private TMP_Text _points;
         [SerializeField] private Slider _healthBar;
         [SerializeField] private Button _healButton;
         [SerializeField] private Button _attackButton;
