@@ -1116,8 +1116,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9cc4391f57cfe4a46a72065d6b7ee9f8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _leftPlayerModel: {fileID: 11400000, guid: ca6abf2488b047344ab1f1ce41e8b5b2, type: 2}
-  _rightPlayerModel: {fileID: 11400000, guid: ca6abf2488b047344ab1f1ce41e8b5b2, type: 2}
+  _leftPlayerData: {fileID: 11400000, guid: 9290bc02512117f45a40e06b10aaeba7, type: 2}
+  _rightPlayerData: {fileID: 11400000, guid: ca6abf2488b047344ab1f1ce41e8b5b2, type: 2}
   _leftPlayerView: {fileID: 642178929}
   _rightPlayerView: {fileID: 1551509370}
   _startGameButton: {fileID: 1851783996}

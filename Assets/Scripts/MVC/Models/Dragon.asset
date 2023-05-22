@@ -9,10 +9,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d4d2370a6483f44ca89362eb4917ccae, type: 3}
+  m_Script: {fileID: 11500000, guid: 24db3264da20a294b9519d505db0010f, type: 3}
   m_Name: Dragon
   m_EditorClassIdentifier: 
-  _name: Dragon
-  _maxHealth: 150
-  _currentHealth: 150
-  _power: 40
+  <Name>k__BackingField: Dragon
+  <MaxHealth>k__BackingField: 200
+  <CurrentHealth>k__BackingField: 200
+  <Power>k__BackingField: 50

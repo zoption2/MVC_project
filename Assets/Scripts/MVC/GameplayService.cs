@@ -9,6 +9,7 @@ namespace PatternMVC
     {
         void Attack(Player player);
         void Heal(Player player);
+        void StartGameplay();
         void CompleteTurn();
         void SetDead(Player player);
     }
@@ -19,8 +20,8 @@ namespace PatternMVC
         private const string kWinFormat = "{0} win the battle in {1} turns!";
         private const string kRoundFormat = "Round: {0}";
 
-        [SerializeField] private Model _leftPlayerModel;
-        [SerializeField] private Model _rightPlayerModel;
+        [SerializeField] private PlayerData _leftPlayerData;
+        [SerializeField] private PlayerData _rightPlayerData;
         [SerializeField] private MVC_View _leftPlayerView;
         [SerializeField] private MVC_View _rightPlayerView;
         [SerializeField] private Button _startGameButton;
@@ -41,17 +42,13 @@ namespace PatternMVC
 
         public void StartGameplay()
         {
+            _turn = 1;
+            _playersQueue = new Queue<IController>();
             _isGameEnded = false;
             _startGameButton.gameObject.SetActive(false);
-            _leftModel = _leftPlayerModel;
-            _rightModel = _rightPlayerModel;
-            _leftView = _leftPlayerView;
-            _rightView = _rightPlayerView;
 
             _leftPlayer = GetPlayer(Player.Left);
-            _leftPlayer.Init();
             _rightPlayer = GetPlayer(Player.Right);
-            _rightPlayer.Init();
 
             PrepareRound();
             StartTurn();
@@ -98,10 +95,10 @@ namespace PatternMVC
             switch (player)
             {
                 case Player.Left:
-                    _winText.text = string.Format(kWinFormat, _rightPlayerModel.Name, _turn);
+                    _winText.text = string.Format(kWinFormat, _rightPlayerData.Name, _turn);
                     break;
                 case Player.Right:
-                    _winText.text = string.Format(kWinFormat, _leftPlayerModel.Name, _turn);
+                    _winText.text = string.Format(kWinFormat, _leftPlayerData.Name, _turn);
                     break;
             }
             _isGameEnded = true;
@@ -128,13 +125,18 @@ namespace PatternMVC
 
         private void PrepareRound()
         {
-            _turnText.text = string.Format(kRoundFormat, _turn);
+            DisplayRound(_turn);
             _playersQueue = new(2);
             _playersQueue.Enqueue(_leftPlayer);
             _leftPlayer.Wait();
             _playersQueue.Enqueue(_rightPlayer);
             _rightPlayer.Wait();
             _turn++;
+        }
+
+        private void DisplayRound(int round)
+        {
+            _turnText.text = string.Format(kRoundFormat, _turn);
         }
 
         private void StartTurn()
@@ -145,31 +147,28 @@ namespace PatternMVC
 
         private void EndGame()
         {
+            _leftPlayer.Complete();
+            _rightPlayer.Complete();
             _startGameButton.gameObject.SetActive(true);
-            _turn = 1;
-            _leftPlayer.Reset();
-            _rightPlayer.Reset();
         }
 
         private IController GetPlayer(Player player)
         {
-            IModel model = null;
-            IView view = null;
             IController controller = null;
             switch (player)
             {
                 case Player.Left:
-                    model = _leftPlayerModel;
-                    view = _leftPlayerView;
-                    controller = new Controller(model, view, Player.Left, this);
-                    controller.Init();
+                    _leftModel = new Model(_leftPlayerData);
+                    _leftView = _leftPlayerView;
+                    controller = new Controller(Player.Left, this);
+                    controller.Init(_leftModel, _leftView);
                     return controller;
 
                 case Player.Right:
-                    model = _rightPlayerModel;
-                    view = _rightPlayerView;
-                    controller = new Controller(model, view, Player.Right, this);
-                    controller.Init();
+                    _rightModel = new Model(_rightPlayerData);
+                    _rightView = _rightPlayerView;
+                    controller = new Controller(Player.Right, this);
+                    controller.Init(_rightModel, _rightView);
                     return controller;
             }
 
@@ -182,21 +181,17 @@ namespace PatternMVC
         [ContextMenu("Update left player Model")]
         private void ChangeLeftModel()
         {
-            if (!_leftModel.Equals(_leftPlayerModel))
-            {
-                _leftPlayer.ChangeModel(_leftPlayerModel);
-                Debug.Log("Left player model changed!");
-            }
+            var model = new Model(_leftPlayerData);
+            _leftPlayer.ChangeModel(model);
+            Debug.Log("Left player model changed!");
         }
 
         [ContextMenu("Update right player Model")]
         private void ChangeRightModel()
         {
-            if (!_rightModel.Equals(_rightPlayerModel))
-            {
-                _rightPlayer.ChangeModel(_rightPlayerModel);
-                Debug.Log("Right player model changed!");
-            }
+            var model = new Model(_rightPlayerData);
+            _rightPlayer.ChangeModel(model);
+            Debug.Log("Right player model changed!");
         }
 
         [ContextMenu("Update left player View")]

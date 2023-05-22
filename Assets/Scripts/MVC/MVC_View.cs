@@ -58,7 +58,6 @@ namespace PatternMVC
 
         public void Hide(Action callback = null)
         {
-            gameObject.SetActive(false);
             _attackButton.onClick.RemoveListener(OnAttackButtonClick);
             _healButton.onClick.RemoveListener(OnHealButtonClick);
             callback?.Invoke();
@@ -108,12 +107,6 @@ namespace PatternMVC
         {
             ON_HEAL_CLICK?.Invoke();
         }
-    }
-
-    public enum Player
-    {
-        Left,
-        Right
     }
 }
 

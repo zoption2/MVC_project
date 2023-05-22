@@ -2,10 +2,10 @@
 {
     public interface IController
     {
-        void Init();
+        void Init(IModel model, IView view);
         void Play();
         void Wait();
-        void Reset();
+        void Complete();
         void DoDamage(int value);
         void DoHeal(int value);
         void ChangeModel(IModel model);
@@ -20,18 +20,17 @@
         private readonly IGameplayService _gameplayService;
         private readonly Player _player;
 
-        public Controller(IModel model, IView view, Player player, IGameplayService gameplayService)
+        public Controller(Player player, IGameplayService gameplayService)
         {
             _gameplayService = gameplayService;
             _player = player;
-            _model = model;
-            _view = view;
         }
 
-        public void Init()
+        public void Init(IModel model, IView view)
         {
-            _model.Init();
-            InitView();
+            _model = model;
+            _view = view;
+            ChangeView(view);
         }
 
         public void Play()
@@ -44,9 +43,9 @@
             _view.SetActive(false);
         }
 
-        public void Reset()
+        public void Complete()
         {
-            _model.DoReset();
+            _view.Hide();
         }
 
         public void DoDamage(int value)
@@ -71,18 +70,17 @@
         public void ChangeModel(IModel model)
         {
             _model.Unsubscribe(_view.StatsObserver);
-            _view.ON_ATTACK_CLICK -= DoOnAttack;
-            _view.ON_HEAL_CLICK -= DoOnHeal;
+            _view.ON_ATTACK_CLICK -= Attack;
+            _view.ON_HEAL_CLICK -= Heal;
             _model = model;
-            _model.Init();
             InitView();
         }
 
         public void ChangeView(IView view)
         {
             _model.Unsubscribe(_view.StatsObserver);
-            _view.ON_ATTACK_CLICK -= DoOnAttack;
-            _view.ON_HEAL_CLICK -= DoOnHeal;
+            _view.ON_ATTACK_CLICK -= Attack;
+            _view.ON_HEAL_CLICK -= Heal;
             _view = view;
             InitView();
         }
@@ -95,20 +93,20 @@
             _view.SetPower(_model.Power);
 
             _model.Subscribe(_view.StatsObserver);
-            _view.ON_ATTACK_CLICK += DoOnAttack;
-            _view.ON_HEAL_CLICK += DoOnHeal;
+            _view.ON_ATTACK_CLICK += Attack;
+            _view.ON_HEAL_CLICK += Heal;
 
             _view.Show();
         }
 
-        private void DoOnAttack()
+        private void Attack()
         {
             _gameplayService.Attack(_player);
             _view.SetActive(false);
             _gameplayService.CompleteTurn();
         }
 
-        private void DoOnHeal()
+        private void Heal()
         {
             _gameplayService.Heal(_player);
             _view.SetActive(false);

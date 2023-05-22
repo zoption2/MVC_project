@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using UnityEngine;
 
 
 namespace PatternMVC
@@ -10,8 +9,6 @@ namespace PatternMVC
         public int MaxHealth { get; }
         public int CurrentHealth { get; }
         public int Power { get; }
-        void Init();
-        void DoReset();
         void ChangeMaxHealth(int value);
         void ChangeCurrentHealth(int value);
         void ChangePower(int value);
@@ -19,42 +16,33 @@ namespace PatternMVC
         void Unsubscribe(IStatsObserver listener);
     }
 
-    [CreateAssetMenu(fileName = "NewMVCModel", menuName = "ScriptableObjects/Models/MVC")]
-    public class Model : ScriptableObject, IModel
+
+    public class Model : IModel
     {
-        [SerializeField] private string _name = "Player";
-        [SerializeField] private int _maxHealth = 100;
-        [SerializeField] private int _currentHealth = 100;
-        [SerializeField] private int _power = 20;
-
         private List<IStatsObserver> _statListeners;
-        private string _tempName;
-        private int _tempMaxHealth;
-        private int _tempCurrentHealth;
-        private int _tempPower;
+        private string _name;
+        private int _maxHealth;
+        private int _currentHealth;
+        private int _power;
 
-        public string Name => _tempName;
-        public int MaxHealth => _tempMaxHealth;
-        public int CurrentHealth => _tempCurrentHealth;
-        public int Power => _tempPower;
+        public string Name => _name;
+        public int MaxHealth => _maxHealth;
+        public int CurrentHealth => _currentHealth;
+        public int Power => _power;
 
-        public void Init()
+        public Model(PlayerData playerData)
         {
-            _statListeners = new();
-            _tempName = _name;
-            _tempMaxHealth = _maxHealth;
-            _tempCurrentHealth = _currentHealth;
-            _tempPower = _power;
-        }
+            _name = playerData.Name;
+            _maxHealth = playerData.MaxHealth;
+            _currentHealth = playerData.CurrentHealth;
+            _power = playerData.Power;
 
-        public void DoReset()
-        {
-            Init();
+            _statListeners = new List<IStatsObserver>();
         }
 
         public void ChangeMaxHealth(int value)
         {
-            _tempMaxHealth = value;
+            _maxHealth = value;
             for (int i = 0, j = _statListeners.Count; i < j; i++)
             {
                 _statListeners[i].SetMaxHealth(value);
@@ -63,7 +51,7 @@ namespace PatternMVC
 
         public void ChangeCurrentHealth(int value)
         {
-            _tempCurrentHealth = value;
+            _currentHealth = value;
             for (int i = 0, j = _statListeners.Count; i < j; i++)
             {
                 _statListeners[i].SetCurrentHealth(value);
@@ -72,7 +60,7 @@ namespace PatternMVC
 
         public void ChangePower(int value)
         {
-            _tempPower = value;
+            _power = value;
             for (int i = 0, j = _statListeners.Count; i < j; i++)
             {
                 _statListeners[i].SetPower(value);
