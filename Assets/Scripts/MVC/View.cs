@@ -2,6 +2,7 @@
 using System;
 using UnityEngine.UI;
 using TMPro;
+using DG.Tweening;
 
 namespace PatternMVC
 {
@@ -17,7 +18,9 @@ namespace PatternMVC
         void SetCurrentHealth(int value);
         void SetPower(int value);
         void SetActive(bool isActive);
-        void SetAlive(bool isAlive);
+        void ShowImmediately();
+        void HideImmediately();
+        void Release();
     }
 
     public interface IStatsObserver
@@ -28,11 +31,14 @@ namespace PatternMVC
     }
 
 
-    public class MVC_View : MonoBehaviour, IView, IStatsObserver
+    public class View : MonoBehaviour, IView, IStatsObserver
     {
         public event Action ON_ATTACK_CLICK;
         public event Action ON_HEAL_CLICK;
 
+        private const float kAnimationDuration = 1;
+        private const float kShowedScale = 2;
+        private const float kHidedScale = 0;
         private const string kHealthFormat = "{0}/{1}";
         private const int kMinHealthLimit = 0;
 
@@ -50,17 +56,37 @@ namespace PatternMVC
 
         public void Show(Action callback = null)
         {
+            transform.localScale = Vector3.zero;
             gameObject.SetActive(true);
-            _attackButton.onClick.AddListener(OnAttackButtonClick);
-            _healButton.onClick.AddListener(OnHealButtonClick);
-            callback?.Invoke();
+            AnimateShowing(() =>
+            {
+                _attackButton.onClick.AddListener(OnAttackButtonClick);
+                _healButton.onClick.AddListener(OnHealButtonClick);
+                callback?.Invoke();
+            });
         }
 
         public void Hide(Action callback = null)
         {
             _attackButton.onClick.RemoveListener(OnAttackButtonClick);
             _healButton.onClick.RemoveListener(OnHealButtonClick);
-            callback?.Invoke();
+            AnimateHiding(() =>
+            {
+                gameObject.SetActive(false);
+                callback?.Invoke();
+            });
+        }
+
+        public void ShowImmediately()
+        {
+            _attackButton.onClick.AddListener(OnAttackButtonClick);
+            _healButton.onClick.AddListener(OnHealButtonClick);
+        }
+
+        public void HideImmediately()
+        {
+            _attackButton.onClick.RemoveListener(OnAttackButtonClick);
+            _healButton.onClick.RemoveListener(OnHealButtonClick);
         }
 
         public void SetActive(bool isActive)
@@ -93,9 +119,9 @@ namespace PatternMVC
             _power.text = value.ToString();
         }
 
-        public void SetAlive(bool isAlive)
+        public void Release()
         {
-
+            Destroy(gameObject);
         }
 
         private void OnAttackButtonClick()
@@ -106,6 +132,22 @@ namespace PatternMVC
         private void OnHealButtonClick()
         {
             ON_HEAL_CLICK?.Invoke();
+        }
+
+        private void AnimateShowing(Action callback)
+        {
+            transform.DOScale(kShowedScale, kAnimationDuration).SetEase(Ease.OutExpo).OnComplete(()=>
+            {
+                callback?.Invoke();
+            });
+        }
+
+        private void AnimateHiding(Action callback)
+        {
+            transform.DOScale(kHidedScale, kAnimationDuration).SetEase(Ease.Linear).OnComplete(() =>
+            {
+                callback?.Invoke();
+            });
         }
     }
 }

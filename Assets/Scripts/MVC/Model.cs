@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using UnityEngine;
+using GeneralData;
 
 
 namespace PatternMVC
@@ -20,6 +22,7 @@ namespace PatternMVC
     public class Model : IModel
     {
         private List<IStatsObserver> _statListeners;
+        private PlayerData _data;
         private string _name;
         private int _maxHealth;
         private int _currentHealth;
@@ -30,12 +33,13 @@ namespace PatternMVC
         public int CurrentHealth => _currentHealth;
         public int Power => _power;
 
-        public Model(PlayerData playerData)
+        public Model(PlayerData data)
         {
-            _name = playerData.Name;
-            _maxHealth = playerData.MaxHealth;
-            _currentHealth = playerData.CurrentHealth;
-            _power = playerData.Power;
+            _data = data;
+            _name = data.Name;
+            _maxHealth = data.MaxHealth;
+            _currentHealth = data.CurrentHealth;
+            _power = data.Power;
 
             _statListeners = new List<IStatsObserver>();
         }
@@ -43,6 +47,7 @@ namespace PatternMVC
         public void ChangeMaxHealth(int value)
         {
             _maxHealth = value;
+            _data.UpdateMaxHealth(value);
             for (int i = 0, j = _statListeners.Count; i < j; i++)
             {
                 _statListeners[i].SetMaxHealth(value);
@@ -51,16 +56,17 @@ namespace PatternMVC
 
         public void ChangeCurrentHealth(int value)
         {
-            _currentHealth = value;
+            _currentHealth = Mathf.Clamp(value, 0, _maxHealth);
             for (int i = 0, j = _statListeners.Count; i < j; i++)
             {
-                _statListeners[i].SetCurrentHealth(value);
+                _statListeners[i].SetCurrentHealth(_currentHealth);
             }
         }
 
         public void ChangePower(int value)
         {
             _power = value;
+            _data.UpdatePower(value);
             for (int i = 0, j = _statListeners.Count; i < j; i++)
             {
                 _statListeners[i].SetPower(value);
