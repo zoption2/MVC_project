@@ -10,9 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 24db3264da20a294b9519d505db0010f, type: 3}
-  m_Name: Warrior
+  m_Name: Mage
   m_EditorClassIdentifier: 
-  <Name>k__BackingField: Warrior
-  <MaxHealth>k__BackingField: 100
-  <CurrentHealth>k__BackingField: 100
-  <Power>k__BackingField: 20
+  <Name>k__BackingField: Mage
+  <MaxHealth>k__BackingField: 50
+  <CurrentHealth>k__BackingField: 50
+  <Power>k__BackingField: 40
+  <FreePoints>k__BackingField: 10

@@ -8,12 +8,6 @@ namespace PatternMVP
 {
     public interface IDataObserver
     {
-        //void SetName(string value);
-        //void SetMaxHealth(int value);
-        //void SetCurrentHealth(int value);
-        //void SetPower(int value);
-        //void SetFreePoints(int value);
-
         void UpdateData(IObservableData data);
     }
 
@@ -40,13 +34,14 @@ namespace PatternMVP
         [SerializeField] private TMP_Text _name;
         [SerializeField] private TMP_Text _health;
         [SerializeField] private TMP_Text _power;
-        [SerializeField] private TMP_Text _points;
         [SerializeField] private Slider _healthBar;
         [SerializeField] private Button _healButton;
         [SerializeField] private Button _attackButton;
 
         [SerializeField] private GameObject _statsPanel;
         [SerializeField] private TMP_Text _freePoints;
+        [SerializeField] private TMP_Text _tempHealth;
+        [SerializeField] private TMP_Text _tempPower;
         [SerializeField] private Button _plusHealthButton;
         [SerializeField] private Button _minusHealthButton;
         [SerializeField] private Button _plusPowerButton;
@@ -104,12 +99,13 @@ namespace PatternMVP
         {
             _healButton.interactable = isActive;
             _attackButton.interactable = isActive;
-            ActivateStatsPanel(isActive);
+            //ActivateStatsPanel(isActive);
         }
 
         public void ActivateStatsPanel(bool isActive)
         {
             _statsPanel.SetActive(isActive);
+            ValidateStatsInputs();
         }
 
         public void UpdateData(IObservableData data)
@@ -157,6 +153,8 @@ namespace PatternMVP
             _minusPowerButton.onClick.AddListener(PowerDown);
             _applyStatsButton.onClick.AddListener(ApplyStatsChanges);
             _cancelStatsButton.onClick.AddListener(CancelStatsChanges);
+            _attackButton.onClick.AddListener(Attack);
+            _healButton.onClick.AddListener(Heal);
         }
 
         private void UnsubscribeButtons()
@@ -167,6 +165,8 @@ namespace PatternMVP
             _minusPowerButton.onClick.RemoveListener(PowerDown);
             _applyStatsButton.onClick.RemoveListener(ApplyStatsChanges);
             _cancelStatsButton.onClick.RemoveListener(CancelStatsChanges);
+            _attackButton.onClick.RemoveListener(Attack);
+            _healButton.onClick.RemoveListener(Heal);
         }
 
         private void ApplyStatsChanges()
@@ -203,9 +203,19 @@ namespace PatternMVP
             ValidateStatsInputs();
         }
 
+        private void Attack()
+        {
+            _presenter.Attack();
+        }
+
+        private void Heal()
+        {
+            _presenter.Heal();
+        }
+
         private void ValidateStatsInputs()
         {
-            bool isFreePointsAvailable = _presenter.PowerPoints > kMinPoints;
+            bool isFreePointsAvailable = _presenter.FreePoints > kMinPoints;
             _plusHealthButton.interactable = isFreePointsAvailable;
             _plusPowerButton.interactable = isFreePointsAvailable;
 
@@ -214,6 +224,10 @@ namespace PatternMVP
 
             bool isPowerPointsExist = _presenter.PowerPoints > kMinPoints;
             _minusPowerButton.interactable = isPowerPointsExist;
+
+            _tempHealth.text = _presenter.MaxHealthPoints.ToString();
+            _tempPower.text = _presenter.PowerPoints.ToString();
+            _freePoints.text = _presenter.FreePoints.ToString();
         }
 
         private void AnimateShowing(Action callback)

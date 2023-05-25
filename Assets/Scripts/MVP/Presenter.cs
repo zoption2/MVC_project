@@ -27,22 +27,25 @@ namespace PatternMVP
     {
         private IModel _model;
         private IView _view;
-        private int _freePoints;
         private int _maxHealth;
         private int _power;
 
+        private int _freePoints;
+        private int _maxHealthPoints;
+        private int _powerPoints;
+
         public int FreePoints { get { return _freePoints; }}
-        public int MaxHealthPoints { get { return _maxHealth; } }
-        public int PowerPoints { get { return _power; } }
+        public int MaxHealthPoints { get { return _maxHealthPoints; } }
+        public int PowerPoints { get { return _powerPoints; } }
 
         public Presenter(IModel model, IView view)
         {
             _model = model;
             _view = view;
 
+            InitView();
             UpdateData(_model);
             _model.Subscribe(this);
-            InitView();
         }
 
 
@@ -80,50 +83,60 @@ namespace PatternMVP
             if (health <= 0)
             {
                 _view.SetActive(false);
+                _view.ActivateStatsPanel(false);
             }
         }
 
         public void ApplyStats()
         {
             _model.ChangeFreePoints(_freePoints);
-            _model.ChangePower(_power);
-            _model.ChangeMaxHealth(_maxHealth);
+            _model.ChangePower(_power + _powerPoints);
+            _model.ChangeMaxHealth(_maxHealth + _maxHealthPoints);
+            _freePoints = 0;
+            _powerPoints = 0;
+            _maxHealthPoints = 0;
+            _view.UpdateData(_model);
+            UpdateData(_model);
         }
 
         public void CancelStats()
         {
+            _freePoints = 0;
+            _powerPoints = 0;
+            _maxHealthPoints = 0;
+            _view.UpdateData(_model);
             UpdateData(_model);
         }
 
         public void MaxHealthDown()
         {
-            _maxHealth--;
+            _maxHealthPoints--;
             _freePoints++;
         }
 
         public void MaxHealthUp()
         {
-            _maxHealth++;
+            _maxHealthPoints++;
             _freePoints--;
         }
 
         public void PowerDown()
         {
-            _power--;
+            _powerPoints--;
             _freePoints++;
         }
 
         public void PowerUp()
         {
-            _power++;
+            _powerPoints++;
             _freePoints--;
         }
 
         public void UpdateData(IObservableData data)
         {
             _power = data.Power;
-            _freePoints = data.FreePoints;
             _maxHealth = data.MaxHealth;
+            _freePoints = data.FreePoints;
 
             var needStatsPanel = _freePoints > 0;
             _view.ActivateStatsPanel(needStatsPanel);
@@ -136,6 +149,7 @@ namespace PatternMVP
             _model = model;
             model.Subscribe(this);
             InitView();
+            UpdateData(_model);
         }
 
         public void ChangeView(IView view)
@@ -143,13 +157,14 @@ namespace PatternMVP
             _model.Unsubscribe(_view);
             _view = view;
             InitView();
+            UpdateData(_model);
         }
 
         private void InitView()
         {
+            _view.Init(this);
             _view.UpdateData(_model);
             _model.Subscribe(_view);
-            _view.Init(this);
         }
     }
 }
