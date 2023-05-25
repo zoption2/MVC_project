@@ -11,17 +11,16 @@ namespace PatternMVC
         public int MaxHealth { get; }
         public int CurrentHealth { get; }
         public int Power { get; }
-        void ChangeMaxHealth(int value);
+
         void ChangeCurrentHealth(int value);
-        void ChangePower(int value);
-        void Subscribe(IStatsObserver listener);
-        void Unsubscribe(IStatsObserver listener);
+        void Subscribe(IHealthObserver listener);
+        void Unsubscribe(IHealthObserver listener);
     }
 
 
     public class Model : IModel
     {
-        private List<IStatsObserver> _statListeners;
+        private List<IHealthObserver> _healthObservers;
         private PlayerData _data;
         private string _name;
         private int _maxHealth;
@@ -41,51 +40,31 @@ namespace PatternMVC
             _currentHealth = data.CurrentHealth;
             _power = data.Power;
 
-            _statListeners = new List<IStatsObserver>();
-        }
-
-        public void ChangeMaxHealth(int value)
-        {
-            _maxHealth = value;
-            _data.UpdateMaxHealth(value);
-            for (int i = 0, j = _statListeners.Count; i < j; i++)
-            {
-                _statListeners[i].SetMaxHealth(value);
-            }
+            _healthObservers = new List<IHealthObserver>();
         }
 
         public void ChangeCurrentHealth(int value)
         {
             _currentHealth = Mathf.Clamp(value, 0, _maxHealth);
-            for (int i = 0, j = _statListeners.Count; i < j; i++)
+            for (int i = 0, j = _healthObservers.Count; i < j; i++)
             {
-                _statListeners[i].SetCurrentHealth(_currentHealth);
+                _healthObservers[i].SetHealth(_currentHealth);
             }
         }
 
-        public void ChangePower(int value)
+        public void Subscribe(IHealthObserver listener)
         {
-            _power = value;
-            _data.UpdatePower(value);
-            for (int i = 0, j = _statListeners.Count; i < j; i++)
+            if (!_healthObservers.Contains(listener))
             {
-                _statListeners[i].SetPower(value);
+                _healthObservers.Add(listener);
             }
         }
 
-        public void Subscribe(IStatsObserver listener)
+        public void Unsubscribe(IHealthObserver listener)
         {
-            if (!_statListeners.Contains(listener))
+            if (_healthObservers.Contains(listener))
             {
-                _statListeners.Add(listener);
-            }
-        }
-
-        public void Unsubscribe(IStatsObserver listener)
-        {
-            if (_statListeners.Contains(listener))
-            {
-                _statListeners.Remove(listener);
+                _healthObservers.Remove(listener);
             }
         }
     }

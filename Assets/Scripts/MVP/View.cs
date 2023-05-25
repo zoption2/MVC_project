@@ -2,21 +2,39 @@
 using UnityEngine.UI;
 using TMPro;
 using System;
-using GeneralData;
-
+using DG.Tweening;
 
 namespace PatternMVP
 {
-    public interface IView
+    public interface IDataObserver
+    {
+        //void SetName(string value);
+        //void SetMaxHealth(int value);
+        //void SetCurrentHealth(int value);
+        //void SetPower(int value);
+        //void SetFreePoints(int value);
+
+        void UpdateData(IObservableData data);
+    }
+
+    public interface IView : IDataObserver
     {
         void Init(IPresenter presenter);
         void Show(Action callback = null);
         void Hide(Action callback = null);
-        void OnModelChanged(IStatsProvider stats);
+        void SetActive(bool isActive);
+        void ActivateStatsPanel(bool isActive);
+        void ShowImmediately();
+        void HideImmediately();
+        void Release();
     }
 
     public class View: MonoBehaviour, IView
     {
+        private const int kMinPoints = 0;
+        private const float kAnimationDuration = 1;
+        private const float kShowedScale = 2;
+        private const float kHidedScale = 0;
         private const string kHealthFormat = "{0}/{1}";
 
         [SerializeField] private TMP_Text _name;
@@ -27,132 +45,191 @@ namespace PatternMVP
         [SerializeField] private Button _healButton;
         [SerializeField] private Button _attackButton;
 
+        [SerializeField] private GameObject _statsPanel;
+        [SerializeField] private TMP_Text _freePoints;
         [SerializeField] private Button _plusHealthButton;
         [SerializeField] private Button _minusHealthButton;
         [SerializeField] private Button _plusPowerButton;
         [SerializeField] private Button _minusPowerButton;
+        [SerializeField] private Button _applyStatsButton;
+        [SerializeField] private Button _cancelStatsButton;
 
+        private int _maxValue;
+        private int _currentValue;
         private IPresenter _presenter;
+
 
         public void Init(IPresenter presenter)
         {
             _presenter = presenter;
         }
 
+        public void Show(Action callback = null)
+        {
+            transform.localScale = Vector3.zero;
+            gameObject.SetActive(true);
+            AnimateShowing(() =>
+            {
+                SubscribeButtons();
+                callback?.Invoke();
+            });
+        }
+
+        public void Hide(Action callback = null)
+        {
+            UnsubscribeButtons();
+            AnimateHiding(() =>
+            {
+                gameObject.SetActive(false);
+                callback?.Invoke();
+            });
+        }
+
+        public void ShowImmediately()
+        {
+
+        }
+
+        public void HideImmediately()
+        {
+            
+        }
+
+        public void Release()
+        {
+            Destroy(gameObject);
+        }
+
+        public void SetActive(bool isActive)
+        {
+            _healButton.interactable = isActive;
+            _attackButton.interactable = isActive;
+            ActivateStatsPanel(isActive);
+        }
+
+        public void ActivateStatsPanel(bool isActive)
+        {
+            _statsPanel.SetActive(isActive);
+        }
+
+        public void UpdateData(IObservableData data)
+        {
+            SetMaxHealth(data.MaxHealth);
+            SetCurrentHealth(data.CurrentHealth);
+            SetFreePoints(data.FreePoints);
+            SetPower(data.Power);
+            SetName(data.Name);
+        }
+
+        private void SetCurrentHealth(int value)
+        {
+            _currentValue = value;
+            _healthBar.value = value;
+            _health.text = string.Format(kHealthFormat, _currentValue, _maxValue);
+        }
+
+        private void SetFreePoints(int value)
+        {
+            _freePoints.text = value.ToString();
+        }
+
+        private void SetMaxHealth(int value)
+        {
+            _maxValue = value;
+            _healthBar.maxValue = value;
+        }
+
+        private void SetPower(int value)
+        {
+            _power.text = value.ToString();
+        }
+
         private void SetName(string name)
         {
             _name.text = name;
         }
-    }
 
-    public interface IPresenter
-    {
-        void Init(IModel model, IView view);
-        void Play();
-        void Complete();
-        void ChangeModel(IModel model);
-        void ChangeView(IView view);
-
-        void PowerUp();
-        void PowerDown();
-        void MaxHealthUp();
-        void MaxHealthDown();
-        void ApplyStats();
-        void CancelStats();
-    }
-
-    public class Presenter
-    {
-
-    }
-
-
-    public interface IStatsProvider
-    {
-        public string Name { get; }
-        public int MaxHealth { get; }
-        public int CurrentHealth { get; }
-        public int Power { get; }
-    }
-
-    public interface IModel : IStatsProvider
-    {
-        void ChangeMaxHealth(int value);
-        void ChangeCurrentHealth(int value);
-        void ChangePower(int value);
-        void Subscribe(IStatsObserver listener);
-        void Unsubscribe(IStatsObserver listener);
-    }
-
-
-    public class Model : IModel
-    {
-        private List<IStatsObserver> _statListeners;
-        private PlayerData _data;
-        private string _name;
-        private int _maxHealth;
-        private int _currentHealth;
-        private int _power;
-
-        public string Name => _name;
-        public int MaxHealth => _maxHealth;
-        public int CurrentHealth => _currentHealth;
-        public int Power => _power;
-
-        public Model(PlayerData data)
+        private void SubscribeButtons()
         {
-            _data = data;
-            _name = data.Name;
-            _maxHealth = data.MaxHealth;
-            _currentHealth = data.CurrentHealth;
-            _power = data.Power;
-
-            _statListeners = new List<IStatsObserver>();
+            _plusHealthButton.onClick.AddListener(MaxHealthUp);
+            _minusHealthButton.onClick.AddListener(MaxHealthDown);
+            _plusPowerButton.onClick.AddListener(PowerUp);
+            _minusPowerButton.onClick.AddListener(PowerDown);
+            _applyStatsButton.onClick.AddListener(ApplyStatsChanges);
+            _cancelStatsButton.onClick.AddListener(CancelStatsChanges);
         }
 
-        public void ChangeMaxHealth(int value)
+        private void UnsubscribeButtons()
         {
-            _maxHealth = value;
-            _data.UpdateMaxHealth(value);
-            for (int i = 0, j = _statListeners.Count; i < j; i++)
-            {
-                _statListeners[i].SetMaxHealth(value);
-            }
+            _plusHealthButton.onClick.RemoveListener(MaxHealthUp);
+            _minusHealthButton.onClick.RemoveListener(MaxHealthDown);
+            _plusPowerButton.onClick.RemoveListener(PowerUp);
+            _minusPowerButton.onClick.RemoveListener(PowerDown);
+            _applyStatsButton.onClick.RemoveListener(ApplyStatsChanges);
+            _cancelStatsButton.onClick.RemoveListener(CancelStatsChanges);
         }
 
-        public void ChangeCurrentHealth(int value)
+        private void ApplyStatsChanges()
         {
-            _currentHealth = Mathf.Clamp(value, 0, _maxHealth);
-            for (int i = 0, j = _statListeners.Count; i < j; i++)
-            {
-                _statListeners[i].SetCurrentHealth(_currentHealth);
-            }
+            _presenter.ApplyStats();
         }
 
-        public void ChangePower(int value)
+        private void CancelStatsChanges()
         {
-            _power = value;
-            _data.UpdatePower(value);
-            for (int i = 0, j = _statListeners.Count; i < j; i++)
-            {
-                _statListeners[i].SetPower(value);
-            }
+            _presenter.CancelStats();
         }
 
-        public void Subscribe(IStatsObserver listener)
+        private void MaxHealthUp()
         {
-            if (!_statListeners.Contains(listener))
-            {
-                _statListeners.Add(listener);
-            }
+            _presenter.MaxHealthUp();
+            ValidateStatsInputs();
         }
 
-        public void Unsubscribe(IStatsObserver listener)
+        private void MaxHealthDown()
         {
-            if (_statListeners.Contains(listener))
+            _presenter.MaxHealthDown();
+            ValidateStatsInputs();
+        }
+
+        private void PowerUp()
+        {
+            _presenter.PowerUp();
+            ValidateStatsInputs();
+        }
+
+        private void PowerDown()
+        {
+            _presenter.PowerDown();
+            ValidateStatsInputs();
+        }
+
+        private void ValidateStatsInputs()
+        {
+            bool isFreePointsAvailable = _presenter.PowerPoints > kMinPoints;
+            _plusHealthButton.interactable = isFreePointsAvailable;
+            _plusPowerButton.interactable = isFreePointsAvailable;
+
+            bool isHealthPointsExist = _presenter.MaxHealthPoints > kMinPoints;
+            _minusHealthButton.interactable = isHealthPointsExist;
+
+            bool isPowerPointsExist = _presenter.PowerPoints > kMinPoints;
+            _minusPowerButton.interactable = isPowerPointsExist;
+        }
+
+        private void AnimateShowing(Action callback)
+        {
+            transform.DOScale(kShowedScale, kAnimationDuration).SetEase(Ease.OutExpo).OnComplete(() =>
             {
-                _statListeners.Remove(listener);
-            }
+                callback?.Invoke();
+            });
+        }
+
+        private void AnimateHiding(Action callback)
+        {
+            transform.DOScale(kHidedScale, kAnimationDuration).SetEase(Ease.Linear).OnComplete(() =>
+            {
+                callback?.Invoke();
+            });
         }
     }
 }

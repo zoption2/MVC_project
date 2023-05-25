@@ -2,7 +2,6 @@
 {
     public interface IController
     {
-        void Init(IModel model, IView view);
         void Play();
         void Complete();
         void ChangeModel(IModel model);
@@ -15,7 +14,7 @@
         private IModel _model;
         private IView _view;
 
-        public void Init(IModel model, IView view)
+        public Controller(IModel model, IView view)
         {
             _model = model;
             _view = view;
@@ -61,7 +60,7 @@
 
         public void ChangeModel(IModel model)
         {
-            _model.Unsubscribe(_view.StatsObserver);
+            _model.Unsubscribe(_view);
             _view.ON_ATTACK_CLICK -= DoDamage;
             _view.ON_HEAL_CLICK -= DoHeal;
             _model = model;
@@ -70,7 +69,7 @@
 
         public void ChangeView(IView view)
         {
-            _model.Unsubscribe(_view.StatsObserver);
+            _model.Unsubscribe(_view);
             _view.ON_ATTACK_CLICK -= DoDamage;
             _view.ON_HEAL_CLICK -= DoHeal;
             _view.HideImmediately();
@@ -83,10 +82,10 @@
         {
             _view.SetName(_model.Name);
             _view.SetMaxHealth(_model.MaxHealth);
-            _view.SetCurrentHealth(_model.CurrentHealth);
+            _view.SetHealth(_model.CurrentHealth);
             _view.SetPower(_model.Power);
 
-            _model.Subscribe(_view.StatsObserver);
+            _model.Subscribe(_view);
             _view.ON_ATTACK_CLICK += DoDamage;
             _view.ON_HEAL_CLICK += DoHeal;
         }

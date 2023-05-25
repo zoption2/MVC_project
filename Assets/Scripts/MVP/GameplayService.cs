@@ -1,7 +1,7 @@
 ﻿using GeneralData;
 using UnityEngine;
 
-namespace PatternMVC
+namespace PatternMVP
 {
     public interface IGameplayService
     {
@@ -18,50 +18,50 @@ namespace PatternMVC
         [SerializeField] private View _playerView;
         [SerializeField] private Transform _viewHolder;
 
-        private IController _controller;
+        private IPresenter _presenter;
         private IModel _model;
         private IView _view;
 
 
         public void Play()
         {
-            _controller = CreatePlayer();
-            _controller.Play();
+            _presenter = CreatePlayer();
+            _presenter.Play();
         }
 
         public void Stop()
         {
-            _controller.Complete();
+            _presenter.Complete();
             _model = null;
-            _controller = null;
+            _presenter = null;
         }
 
         public void ChangeModel()
         {
-            if (_controller != null)
+            if (_presenter != null)
             {
                 var model = new Model(_playerData);
-                _controller.ChangeModel(model);
+                _presenter.ChangeModel(model);
             }
         }
 
         public void ChangeView()
         {
-            if (_controller != null)
+            if (_presenter != null)
             {
                 var oldView = _view;
                 _view = Instantiate(_playerView, _viewHolder);
-                _controller.ChangeView(_view);
+                _presenter.ChangeView(_view);
                 oldView.Release();
             }
         }
 
-        private IController CreatePlayer()
+        private IPresenter CreatePlayer()
         {
             _model = new Model(_playerData);
             _view = Instantiate(_playerView, _viewHolder);
-            var controller = new Controller(_model, _view);
-            return controller;
+            var presenter = new Presenter(_model, _view);
+            return presenter;
         }
     }
 }

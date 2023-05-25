@@ -6,16 +6,15 @@ using DG.Tweening;
 
 namespace PatternMVC
 {
-    public interface IView
+    public interface IView : IHealthObserver
     {
         public event Action ON_ATTACK_CLICK;
         public event Action ON_HEAL_CLICK;
-        IStatsObserver StatsObserver { get; }
+
         void Show(Action callback = null);
         void Hide(Action callback = null);
         void SetName(string value);
         void SetMaxHealth(int value);
-        void SetCurrentHealth(int value);
         void SetPower(int value);
         void SetActive(bool isActive);
         void ShowImmediately();
@@ -23,15 +22,13 @@ namespace PatternMVC
         void Release();
     }
 
-    public interface IStatsObserver
+    public interface IHealthObserver
     {
-        void SetMaxHealth(int value);
-        void SetCurrentHealth(int value);
-        void SetPower(int value);
+        void SetHealth(int value);
     }
 
 
-    public class View : MonoBehaviour, IView, IStatsObserver
+    public class View : MonoBehaviour, IView
     {
         public event Action ON_ATTACK_CLICK;
         public event Action ON_HEAL_CLICK;
@@ -40,7 +37,7 @@ namespace PatternMVC
         private const float kShowedScale = 2;
         private const float kHidedScale = 0;
         private const string kHealthFormat = "{0}/{1}";
-        private const int kMinHealthLimit = 0;
+        //private const int kMinHealthLimit = 0;
 
         [SerializeField] private TMP_Text _name;
         [SerializeField] private TMP_Text _health;
@@ -52,7 +49,7 @@ namespace PatternMVC
         private int _maxValue;
         private int _currentValue;
 
-        public IStatsObserver StatsObserver => this;
+        public IHealthObserver StatsObserver => this;
 
         public void Show(Action callback = null)
         {
@@ -101,9 +98,9 @@ namespace PatternMVC
             _healthBar.maxValue = value;
         }
 
-        public void SetCurrentHealth(int value)
+        public void SetHealth(int value)
         {
-            value = Mathf.Clamp(value, kMinHealthLimit, _maxValue);
+            //value = Mathf.Clamp(value, kMinHealthLimit, _maxValue);
             _currentValue = value;
             _healthBar.value = value;
             _health.text = string.Format(kHealthFormat, _currentValue, _maxValue);
